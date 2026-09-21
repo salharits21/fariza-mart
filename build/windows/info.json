@@ -1,0 +1,15 @@
+{
+	"fixed": {
+		"file_version": "1.0.0"
+	},
+	"info": {
+		"0000": {
+			"ProductVersion": "1.0.0",
+			"CompanyName": "Fariza Mart",
+			"FileDescription": "Fariza Mart POS - Sistem Point of Sale offline",
+			"LegalCopyright": "© 2026, Fariza Mart",
+			"ProductName": "Fariza Mart POS",
+			"Comments": "Aplikasi kasir POS offline Fariza Mart"
+		}
+	}
+}
