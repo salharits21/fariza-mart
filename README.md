@@ -2,6 +2,18 @@
 
 Aplikasi kasir desktop offline (Wails v3 + React + Go + SQLite).
 
+## Download Aplikasi (Windows)
+
+- **Halaman rilis:** https://github.com/salharits21/fariza-mart/releases/latest
+- Download file installer **`farizamart-amd64-installer.exe`**, jalankan, ikuti wizard NSIS.
+- Rilis baru dibuat otomatis setiap ada tag versi, contoh:
+  `git tag v1.0.0 && git push origin v1.0.0` → installer muncul di halaman Releases.
+- Shortcut Start Menu + Desktop dibuat otomatis oleh installer.
+
+> Catatan: instalasi default bersifat per-mesin (butuh akses admin).
+> Database tersimpan di `%AppData%\farizamart\data.db` dan tidak ikut
+> terhapus saat update/reinstal.
+
 ## Production Deploy (PC Kasir, Installer NSIS)
 
 ### 1. Persiapan build
@@ -12,7 +24,16 @@ Aplikasi kasir desktop offline (Wails v3 + React + Go + SQLite).
   `wails3 task common:update:build-assets`
 
 ### 2. Build installer Windows (NSIS)
-Di PC build Windows (butuh Go, Node, NSIS/makensis, WebView2 bootstrapper):
+
+**Cara utama (disarankan): via GitHub Actions.**
+Push tag versi (`git tag v1.0.0 && git push origin v1.0.0`) atau jalankan
+workflow `Release (Windows NSIS)` manual dari tab Actions. Workflow
+(`.github/workflows/release.yml`) otomatis: build frontend production +
+`go vet` + `task package`, lalu mempublish `farizamart-amd64-installer.exe`
+ke halaman GitHub Releases.
+
+**Cara manual** di PC build Windows (butuh Go, Node, Task, wails3 CLI
+`v3.0.0-beta.19`, NSIS/makensis, WebView2 bootstrapper):
 
 1. `task build` — build frontend production + `bin/farizamart.exe`
 2. `task package` (default NSIS, scope machine) — hasil:

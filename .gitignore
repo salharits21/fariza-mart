@@ -1,5 +1,7 @@
 .task
 bin
+/farizamart.exe
+*.syso
 frontend/dist
 frontend/node_modules
 build/linux/appimage/build
@@ -9,3 +11,33 @@ build/ios/xcode/overlay.json
 build/ios/xcode/gen/
 build/android/overlay.json
 build/android/gen/
+# Gradle caches & build outputs (regenerated locally)
+build/android/.gradle/
+build/android/build/
+# Internal spec doc (not for public repo)
+spesifikasi-aplikasi-pos.md
+# Local databases (runtime data, never commit)
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+# Logs
+*.log
+npm-debug.log*
+# OS files
+.DS_Store
+Thumbs.db
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+# Go
+coverage.out
+coverage.html
+# Env secrets
+.env
+.env.local
+.env.*.local

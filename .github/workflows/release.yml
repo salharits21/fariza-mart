@@ -1,0 +1,69 @@
+name: Release (Windows NSIS)
+
+# Build the production installer and publish a GitHub Release.
+# Trigger: push a version tag, e.g. `git tag v1.0.0 && git push origin v1.0.0`
+# Or run manually from the Actions tab (workflow_dispatch).
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+
+      - name: Install Wails v3 CLI (pinned to go.mod version)
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.19
+          Add-Content $env:GITHUB_PATH "$env:USERPROFILE\go\bin"
+
+      - name: Check NSIS (makensis)
+        run: |
+          Get-Command makensis -ErrorAction Stop
+          makensis -VERSION
+
+      - name: Vet backend
+        run: go vet ./...
+
+      - name: Build + package NSIS installer
+        # Produces bin/farizamart-amd64-installer.exe
+        # (frontend production build + Go build + NSIS, incl. WebView2 bootstrapper)
+        run: task package
+
+      - name: List installer output
+        run: Get-ChildItem bin/ -Filter *installer*.exe
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bin/*installer*.exe
+          generate_release_notes: true
