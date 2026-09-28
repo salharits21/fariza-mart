@@ -62,9 +62,23 @@ Installer otomatis mengurus WebView2 runtime (`wails.webview2runtime` di
 - Laporan harian PDF tetap ukuran A4 (untuk arsip/kantor, bukan struk).
 
 ### 5. Backup data (wajib harian)
-- Database: `%AppData%\farizamart\data.db` (plus `-wal`/`-shm` saat app berjalan).
-- Tutup aplikasi, lalu copy `data.db` ke flashdisk / folder backup.
-  Beri nama tanggal, misal `data-2026-09-21.db`.
+- **Backup transaksi (CSV)**: menu **Riwayat Transaksi** → tombol
+  **Backup Transaksi (CSV)**. Mengunduh semua transaksi sesuai filter
+  aktif (rentang tanggal / kasir) sebagai file `.csv` — 1 baris per item
+  belanja, termasuk status void. Format `;` + encoding UTF-8 BOM agar
+  Microsoft Excel langsung membacanya; kolom angka tanpa pemisah ribuan
+  sehingga bisa dijumlahkan.
+- **Import transaksi (CSV, admin only)**: menu **Riwayat Transaksi** →
+  tombol **Import Transaksi (CSV)**, pilih file backup `.csv`. Aturan:
+  kode transaksi yang sudah ada **dilewati** (aman diimpor ulang),
+  **stok tidak diubah** (import hanya memulihkan catatan historis),
+  nama kasir yang tidak dikenal dialihkan ke admin pengimpor, status
+  void + alasan ikut dipulihkan. Hasil (diimpor/dilewati/peringatan)
+  ditampilkan setelah selesai.
+- **Backup database penuh**: database di `%AppData%\farizamart\data.db`
+  (plus `-wal`/`-shm` saat app berjalan). Tutup aplikasi, lalu copy
+  `data.db` ke flashdisk / folder backup. Beri nama tanggal, misal
+  `data-2026-09-21.db`.
 - Restore: tutup aplikasi, kembalikan file ke `%AppData%\farizamart\data.db`.
 - Reinstal/update aplikasi tidak menghapus database (di luar binary).
 

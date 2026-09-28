@@ -10,6 +10,7 @@ export type {
     DailySales,
     DashboardData,
     EmployeeTransactions,
+    ImportTransactionsResult,
     Product,
     StockReportItem,
     StockWithdrawal,

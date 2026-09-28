@@ -24,6 +24,16 @@ export function CreateTransaction(req: models$0.CreateTransactionRequest): $Canc
 }
 
 /**
+ * ExportTransactionsCSV exports transactions (one row per item line) as
+ * CSV text for backup. Filters match GetTransactions; empty means all.
+ * The file is ';' separated with a UTF-8 BOM so Microsoft Excel (id-ID
+ * locale) opens it correctly. Numbers are written raw so Excel can sum them.
+ */
+export function ExportTransactionsCSV(startDate: string, endDate: string, employeeFilter: string): $CancellablePromise<string> {
+    return $Call.ByID(596933177, startDate, endDate, employeeFilter);
+}
+
+/**
  * GetTransactionByID returns a single transaction with its items.
  */
 export function GetTransactionByID(id: number): $CancellablePromise<models$0.Transaction> {
@@ -37,6 +47,24 @@ export function GetTransactionByID(id: number): $CancellablePromise<models$0.Tra
  */
 export function GetTransactions(startDate: string, endDate: string, employeeFilter: string): $CancellablePromise<models$0.Transaction[] | null> {
     return $Call.ByID(2760386793, startDate, endDate, employeeFilter);
+}
+
+/**
+ * ImportTransactionsCSV restores transactions from a CSV backup file created
+ * by ExportTransactionsCSV. The frontend reads the file as text and passes
+ * its content here.
+ * 
+ * Safety rules (by design):
+ *   - Existing transaction codes are SKIPPED (import is idempotent —
+ *     re-importing the same file never duplicates data).
+ *   - Stock is NOT touched: import restores historical records only,
+ *     current stock stays as-is.
+ *   - Only admins may import (checked when a session exists).
+ *   - Cashier names are matched to users by display name/username;
+ *     unknown names fall back to the importing admin.
+ */
+export function ImportTransactionsCSV(csvText: string): $CancellablePromise<models$0.ImportTransactionsResult> {
+    return $Call.ByID(4110655324, csvText);
 }
 
 /**

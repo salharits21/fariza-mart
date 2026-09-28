@@ -83,6 +83,15 @@ export interface EmployeeTransactions {
 }
 
 /**
+ * ImportTransactionsResult summarizes a CSV transaction import.
+ */
+export interface ImportTransactionsResult {
+    "imported": number;
+    "skipped": number;
+    "errors": string[] | null;
+}
+
+/**
  * Product represents a product in the store inventory
  */
 export interface Product {

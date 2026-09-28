@@ -110,6 +110,13 @@ type CreateWithdrawalRequest struct {
 	Reason    string `json:"reason"`
 }
 
+// ImportTransactionsResult summarizes a CSV transaction import.
+type ImportTransactionsResult struct {
+	Imported int      `json:"imported"`
+	Skipped  int      `json:"skipped"`
+	Errors   []string `json:"errors"`
+}
+
 // ==================== Dashboard DTOs ====================
 
 // DashboardData holds all data for the dashboard view

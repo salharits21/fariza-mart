@@ -8,6 +8,7 @@ info:
   companyName: "Fariza Mart" # The name of the company
   productName: "Fariza Mart POS" # The name of the application
   productIdentifier: "com.farizamart.pos" # The unique product identifier
+  displayName: "Fariza Mart POS" # The display name of the application
   description: "Sistem Point of Sale offline untuk Fariza Mart" # The application description
   copyright: "(c) 2026, Fariza Mart" # Copyright text
   comments: "Aplikasi kasir POS offline Fariza Mart" # Comments

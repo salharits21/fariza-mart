@@ -1,13 +1,19 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import * as TransactionService from '../../bindings/farizamart/services/transactionservice';
 import * as EmployeeService from '../../bindings/farizamart/services/employeeservice';
-import { Transaction, UserSession } from '../../bindings/farizamart/models/models';
+import {
+  Transaction,
+  UserSession,
+  ImportTransactionsResult,
+} from '../../bindings/farizamart/models/models';
 import {
   User,
   RefreshCw,
   Eye,
   ShieldAlert,
   AlertCircle,
+  Download,
+  Upload,
 } from '../components/Icons';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
@@ -35,6 +41,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ currentUser }) => {
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [voidReason, setVoidReason] = useState('');
   const [submittingVoid, setSubmittingVoid] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportTransactionsResult | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { showToast } = useToast();
 
@@ -133,6 +144,68 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ currentUser }) => {
     }
   };
 
+  // Download a CSV backup of the currently filtered transactions.
+  const handleBackup = async () => {
+    if (backingUp) return;
+    setBackingUp(true);
+    try {
+      const effectiveUserFilter = isAdmin ? selectedUserFilter : myName;
+      const csv = await TransactionService.ExportTransactionsCSV(
+        startDate,
+        endDate,
+        effectiveUserFilter
+      );
+      if (!csv) throw new Error('Data backup kosong');
+
+      const blob = new Blob([new TextEncoder().encode(csv)], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const range =
+        startDate || endDate ? `${startDate || 'awal'}_${endDate || 'akhir'}` : 'semua';
+      link.download = `Backup-Transaksi-${range}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Backup transaksi (CSV) berhasil diunduh!', 'success');
+    } catch (err: any) {
+      showToast(err?.message || 'Gagal membuat backup transaksi', 'danger');
+    } finally {
+      setBackingUp(false);
+    }
+  };
+
+  // Restore transactions from a CSV backup file (admin only).
+  // Existing transaction codes are skipped, stock is never touched.
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset so the same file can be picked again afterwards.
+    e.target.value = '';
+    if (!file || importing) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Ukuran file maksimal 10MB', 'warning');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const result = await TransactionService.ImportTransactionsCSV(text);
+      setImportResult(result);
+      setIsImportModalOpen(true);
+      loadData();
+    } catch (err: any) {
+      showToast(err?.message || 'Gagal mengimpor transaksi', 'danger');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const formatRupiah = (val: number) => {
     return 'Rp ' + Math.round(val).toLocaleString('id-ID');
   };
@@ -164,7 +237,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ currentUser }) => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary btn-sm" onClick={setFilterToday}>
             Hari Ini
           </button>
@@ -174,6 +247,33 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ currentUser }) => {
           <button className="btn btn-ghost btn-sm" onClick={clearDateFilters}>
             Reset Filter
           </button>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleBackup}
+            disabled={loading || backingUp || importing}
+            title="Unduh backup transaksi (CSV) sesuai filter saat ini"
+          >
+            <Download size={15} />
+            <span>{backingUp ? 'Membuat Backup...' : 'Backup Transaksi (CSV)'}</span>
+          </button>
+          {isAdmin && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading || importing || backingUp}
+              title="Pulihkan transaksi dari file backup CSV (duplikat dilewati, stok tidak diubah)"
+            >
+              <Upload size={15} />
+              <span>{importing ? 'Mengimpor...' : 'Import Transaksi (CSV)'}</span>
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            style={{ display: 'none' }}
+            onChange={handleImportFile}
+          />
         </div>
       </div>
 
@@ -524,6 +624,91 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ currentUser }) => {
             />
           </div>
         </div>
+      </Modal>
+
+      {/* Import Result Modal */}
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Hasil Import Transaksi"
+        footer={
+          <button className="btn btn-primary" onClick={() => setIsImportModalOpen(false)}>
+            Tutup
+          </button>
+        }
+      >
+        {importResult && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+              }}
+            >
+              <div
+                style={{
+                  padding: '12px 16px',
+                  backgroundColor: 'var(--success-bg)',
+                  borderRadius: 'var(--radius-md)',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                  {importResult.imported}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Transaksi diimpor
+                </div>
+              </div>
+              <div
+                style={{
+                  padding: '12px 16px',
+                  backgroundColor: 'var(--bg-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  {importResult.skipped}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Dilewati (sudah ada)
+                </div>
+              </div>
+            </div>
+
+            {importResult.errors && importResult.errors.length > 0 ? (
+              <div>
+                <p style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>
+                  Peringatan ({importResult.errors.length}):
+                </p>
+                <div
+                  style={{
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    fontSize: '0.78rem',
+                    color: 'var(--warning)',
+                    backgroundColor: 'var(--warning-bg)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '10px 12px',
+                  }}
+                >
+                  {importResult.errors.map((msg, i) => (
+                    <div key={i}>• {msg}</div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                Semua baris berhasil diproses tanpa peringatan. Stok tidak diubah oleh import.
+              </p>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );
