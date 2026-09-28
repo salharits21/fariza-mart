@@ -55,6 +55,12 @@ jobs:
         run: |
           Get-Command makensis -ErrorAction Stop
           makensis -VERSION
+      
+      - name: Install Frontend dependencies
+        run: npm ci --prefix frontend
+        
+      - name: Build frontend (production)
+        run: npm run build --prefix frontend
 
       - name: Vet backend
         run: go vet ./...
