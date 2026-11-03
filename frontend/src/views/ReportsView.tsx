@@ -218,7 +218,7 @@ export const ReportsView: React.FC = () => {
           <div>
             <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Package size={18} color="var(--primary)" />
-              <span>A. Laporan Stok Barang ({selectedDate})</span>
+              <span>Laporan Stok Barang ({selectedDate})</span>
             </h3>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               Daftar stok produk aktif, penjualan hari ini, dan sisa stok saat ini
@@ -271,7 +271,7 @@ export const ReportsView: React.FC = () => {
       {/* Transactions by Employee Sections */}
       <div>
         <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '14px' }}>
-          B. Riwayat Transaksi per Karyawan
+          Riwayat Transaksi per Karyawan
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
